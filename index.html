@@ -3,6 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#2c3e50">
+    <meta name="description" content="Kur'an-ı Kerim'i oku - Read the Qur'an with Turkish translation and audio">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Kur'an">
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect fill='%232c3e50' width='192' height='192'/><text x='96' y='130' font-size='100' text-anchor='middle' fill='white' font-family='Arial'>🌙</text></svg>">
     <title>Kur'an Okuma</title>
     <style>
         * {
@@ -221,6 +228,27 @@
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
+
+        .install-prompt {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            display: none;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .install-prompt button {
+            margin: 0 5px;
+            padding: 8px 15px;
+        }
+
+        body.dark-mode .install-prompt {
+            background: #664d03;
+            border-color: #997404;
+        }
     </style>
 </head>
 <body>
@@ -230,6 +258,16 @@
     </header>
 
     <div class="container">
+        <div id="installPrompt" class="install-prompt">
+            <div>
+                <strong>📱 App olarak yükle!</strong> Daha hızlı ve offline kullan.
+            </div>
+            <div>
+                <button onclick="installApp()">Yükle</button>
+                <button onclick="dismissInstall()">Kapat</button>
+            </div>
+        </div>
+
         <div class="controls">
             <button onclick="toggleDark()" title="Karanlık modu aç/kapat">🌙 Karanlık Mod</button>
             <input type="text" id="searchInput" placeholder="Ayah numarasını ara..." onkeyup="searchAyah()">
@@ -244,6 +282,38 @@
     <script>
         const apiBase = "https://api.alquran.cloud/v1";
         let currentSurahData = null;
+        let deferredPrompt = null;
+
+        // Service Worker registrieren
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js').catch(err => {
+                console.log('Service Worker Registrierung fehlgeschlagen:', err);
+            });
+        }
+
+        // Install Prompt handhaben
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            document.getElementById('installPrompt').style.display = 'flex';
+        });
+
+        function installApp() {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                deferredPrompt.userChoice.then((choiceResult) => {
+                    if (choiceResult.outcome === 'accepted') {
+                        console.log('App installiert');
+                    }
+                    deferredPrompt = null;
+                    document.getElementById('installPrompt').style.display = 'none';
+                });
+            }
+        }
+
+        function dismissInstall() {
+            document.getElementById('installPrompt').style.display = 'none';
+        }
 
         // Karanlık modu localStorage'dan yükle
         function loadDarkMode() {
