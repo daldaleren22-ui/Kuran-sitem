@@ -91,7 +91,7 @@
             background: #1e272e;
         }
 
-        #surahSelect {
+        #surahSelect, #reciterSelect {
             grid-column: 1 / -1;
         }
 
@@ -229,25 +229,16 @@
             to { transform: rotate(360deg); }
         }
 
-        .install-prompt {
-            background: #fff3cd;
-            border: 2px solid #ffc107;
-            padding: 15px;
+        .reciter-info {
+            background: #e8f4f8;
+            padding: 10px;
             border-radius: 8px;
-            margin-bottom: 15px;
-            display: none;
-            align-items: center;
-            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 0.95em;
         }
 
-        .install-prompt button {
-            margin: 0 5px;
-            padding: 8px 15px;
-        }
-
-        body.dark-mode .install-prompt {
-            background: #664d03;
-            border-color: #997404;
+        body.dark-mode .reciter-info {
+            background: #1a3a4a;
         }
     </style>
 </head>
@@ -258,61 +249,89 @@
     </header>
 
     <div class="container">
-        <div id="installPrompt" class="install-prompt">
-            <div>
-                <strong>📱 App olarak yükle!</strong> Daha hızlı ve offline kullan.
-            </div>
-            <div>
-                <button onclick="installApp()">Yükle</button>
-                <button onclick="dismissInstall()">Kapat</button>
-            </div>
-        </div>
-
         <div class="controls">
             <button onclick="toggleDark()" title="Karanlık modu aç/kapat">🌙 Karanlık Mod</button>
             <input type="text" id="searchInput" placeholder="Ayah numarasını ara..." onkeyup="searchAyah()">
+            <select id="reciterSelect" onchange="changeReciter()">
+                <option value="">🎙️ Rezitator Seçin...</option>
+            </select>
             <select id="surahSelect" onchange="loadSurah()">
                 <option value="">Sure Seçin...</option>
             </select>
             <button onclick="randomSurah()" title="Rastgele sure yükle">🎲 Rastgele Sure</button>
         </div>
+
+        <div id="reciterInfo" class="reciter-info" style="display: none;"></div>
         <div id="content"></div>
     </div>
 
     <script>
         const apiBase = "https://api.alquran.cloud/v1";
         let currentSurahData = null;
-        let deferredPrompt = null;
+        let currentReciter = 'ar.alafasy';
 
-        // Service Worker registrieren
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('sw.js').catch(err => {
-                console.log('Service Worker Registrierung fehlgeschlagen:', err);
+        // Rezitator-Liste
+        const reciters = {
+            'ar.alafasy': {
+                name: '🎙️ السديس (Abdurrahman As-Sudais)',
+                path: 'ar.alafasy'
+            },
+            'ar.abdulbasit': {
+                name: '🎙️ عبد الباسط (Abdulbasit Abdussamad)',
+                path: 'ar.abdulbasit'
+            },
+            'ar.minshawi': {
+                name: '🎙️ محمد صديق المنشاوي (Muhammad Al-Minshawi)',
+                path: 'ar.minshawi'
+            },
+            'ar.husary': {
+                name: '🎙️ علي الحذيفي (Ali Al-Hudhaifi)',
+                path: 'ar.husary'
+            },
+            'ar.maher': {
+                name: '🎙️ ماهر المعيقلي (Maher Al-Muaqali)',
+                path: 'ar.maher'
+            }
+        };
+
+        // Rezitator-Auswahl laden
+        function loadReciters() {
+            const select = document.getElementById('reciterSelect');
+            Object.keys(reciters).forEach(key => {
+                const opt = document.createElement('option');
+                opt.value = key;
+                opt.textContent = reciters[key].name;
+                select.appendChild(opt);
             });
         }
 
-        // Install Prompt handhaben
-        window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault();
-            deferredPrompt = e;
-            document.getElementById('installPrompt').style.display = 'flex';
-        });
-
-        function installApp() {
-            if (deferredPrompt) {
-                deferredPrompt.prompt();
-                deferredPrompt.userChoice.then((choiceResult) => {
-                    if (choiceResult.outcome === 'accepted') {
-                        console.log('App installiert');
-                    }
-                    deferredPrompt = null;
-                    document.getElementById('installPrompt').style.display = 'none';
-                });
+        // Rezitator ändern
+        function changeReciter() {
+            const reciterId = document.getElementById('reciterSelect').value;
+            if (reciterId) {
+                currentReciter = reciterId;
+                localStorage.setItem('selectedReciter', reciterId);
+                const reciterInfo = document.getElementById('reciterInfo');
+                reciterInfo.innerHTML = `<strong>✓</strong> ${reciters[reciterId].name.replace('🎙️ ', '')} ausgewählt!`;
+                reciterInfo.style.display = 'block';
+                
+                // Wenn eine Sure geladen ist, neu laden mit neuem Rezitator
+                if (currentSurahData) {
+                    loadSurah();
+                }
             }
         }
 
-        function dismissInstall() {
-            document.getElementById('installPrompt').style.display = 'none';
+        // Gespeicherten Rezitator laden
+        function loadSavedReciter() {
+            const saved = localStorage.getItem('selectedReciter');
+            if (saved && reciters[saved]) {
+                currentReciter = saved;
+                document.getElementById('reciterSelect').value = saved;
+                const reciterInfo = document.getElementById('reciterInfo');
+                reciterInfo.innerHTML = `<strong>✓</strong> ${reciters[saved].name.replace('🎙️ ', '')} ausgewählt!`;
+                reciterInfo.style.display = 'block';
+            }
         }
 
         // Karanlık modu localStorage'dan yükle
@@ -396,7 +415,7 @@
                     <div class="arabic">${ar.ayahs[i].text}</div>
                     <div class="translation">${ayah.text}</div>
                     <audio controls>
-                        <source src="https://cdn.alquran.cloud/media/audio/ayah/ar.alafasy/${ayah.number}" type="audio/mpeg">
+                        <source src="https://cdn.alquran.cloud/media/audio/ayah/${currentReciter}/${ayah.number}" type="audio/mpeg">
                         Tarayıcınız ses özelliğini desteklemiyor.
                     </audio>
                 </div>`;
@@ -438,6 +457,8 @@
         // Sayfa yüklendiğinde
         window.addEventListener('load', () => {
             loadDarkMode();
+            loadReciters();
+            loadSavedReciter();
             loadSurahs();
         });
     </script>
