@@ -270,15 +270,15 @@
         let currentSurahData = null;
         let currentReciter = 'ar.alafasy';
 
-        // Rezitator-Liste (5 verschiedene Rezitator)
+        // Rezitator-Liste mit korrekten Audio-IDs
         const reciters = {
             'ar.alafasy': {
                 name: '🎙️ السديس (Abdurrahman As-Sudais)',
-                path: 'ar.alafasy'
+                path: 'ar.sudais'
             },
             'ar.abdulbasit': {
                 name: '🎙️ عبد الباسط (Abdulbasit Abdussamad)',
-                path: 'ar.abdulbasit'
+                path: 'ar.abdulbasit.mrathal'
             },
             'ar.minshawi': {
                 name: '🎙️ محمد صديق المنشاوي (Muhammad Al-Minshawi)',
@@ -409,13 +409,14 @@
             `;
             
             tr.ayahs.forEach((ayah, i) => {
+                const reciterPath = reciters[currentReciter].path;
                 html += `
                 <div class="ayah" data-ayah-number="${ayah.numberInSurah}">
                     <div class="ayah-number">Ayah ${ayah.numberInSurah}</div>
                     <div class="arabic">${ar.ayahs[i].text}</div>
                     <div class="translation">${ayah.text}</div>
                     <audio controls>
-                        <source src="https://cdn.alquran.cloud/media/audio/ayah/${currentReciter}/${ayah.number}" type="audio/mpeg">
+                        <source src="https://cdn.alquran.cloud/media/audio/ayah/${reciterPath}/${ayah.number}" type="audio/mpeg">
                         Tarayıcınız ses özelliğini desteklemiyor.
                     </audio>
                 </div>`;
