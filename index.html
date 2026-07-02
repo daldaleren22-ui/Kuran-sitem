@@ -463,4 +463,461 @@
         });
     </script>
 </body>
+</html><!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#2c3e50">
+    <meta name="description" content="Kur'an-ı Kerim'i oku - Read the Qur'an with Turkish translation and audio">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Kur'an">
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect fill='%232c3e50' width='192' height='192'/><text x='96' y='130' font-size='100' text-anchor='middle' fill='white' font-family='Arial'>🌙</text></svg>">
+    <title>Kur'an Okuma</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f8f1e3;
+            color: #333;
+            transition: all 0.3s ease;
+        }
+
+        body.dark-mode {
+            background: #1e272e;
+            color: #eee;
+        }
+
+        header {
+            background: #2c3e50;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+
+        header h1 {
+            font-size: 2em;
+            margin: 0;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 15px;
+        }
+
+        .controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .controls {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        select, button, input {
+            padding: 12px;
+            font-size: 16px;
+            border: 2px solid #2c3e50;
+            border-radius: 8px;
+            background: white;
+            color: #333;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        body.dark-mode select,
+        body.dark-mode button,
+        body.dark-mode input {
+            background: #34495e;
+            color: #eee;
+            border-color: #1e272e;
+        }
+
+        button:hover {
+            background: #2c3e50;
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        body.dark-mode button:hover {
+            background: #1e272e;
+        }
+
+        #surahSelect, #reciterSelect {
+            grid-column: 1 / -1;
+        }
+
+        .ayah {
+            background: white;
+            padding: 18px;
+            margin: 15px 0;
+            border-radius: 10px;
+            box-shadow: 0 3px 8px rgba(0,0,0,0.1);
+            border-left: 5px solid #2c3e50;
+            transition: all 0.3s ease;
+        }
+
+        body.dark-mode .ayah {
+            background: #34495e;
+            border-left-color: #3498db;
+        }
+
+        .ayah:hover {
+            box-shadow: 0 5px 15px rgba(0,0,0,0.15);
+            transform: translateX(5px);
+        }
+
+        .ayah-number {
+            display: inline-block;
+            background: #2c3e50;
+            color: white;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        body.dark-mode .ayah-number {
+            background: #3498db;
+        }
+
+        .arabic {
+            font-size: 1.45em;
+            line-height: 2;
+            margin: 15px 0;
+            direction: rtl;
+            font-family: 'Arial', sans-serif;
+        }
+
+        .translation {
+            font-size: 1.1em;
+            line-height: 1.8;
+            margin: 15px 0;
+            font-style: italic;
+            color: #555;
+        }
+
+        body.dark-mode .translation {
+            color: #bbb;
+        }
+
+        audio {
+            width: 100%;
+            margin-top: 15px;
+        }
+
+        .loading, .error {
+            text-align: center;
+            padding: 30px;
+            font-size: 1.1em;
+            border-radius: 8px;
+        }
+
+        .loading {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+
+        .error {
+            background: #ffebee;
+            color: #c62828;
+        }
+
+        body.dark-mode .loading {
+            background: #1a3a52;
+            color: #90caf9;
+        }
+
+        body.dark-mode .error {
+            background: #4a1f1f;
+            color: #ff8a80;
+        }
+
+        .surah-header {
+            text-align: center;
+            margin: 30px 0 20px 0;
+            padding-bottom: 20px;
+            border-bottom: 3px solid #2c3e50;
+        }
+
+        body.dark-mode .surah-header {
+            border-bottom-color: #3498db;
+        }
+
+        .surah-header h2 {
+            font-size: 1.8em;
+            margin-bottom: 8px;
+        }
+
+        .surah-info {
+            color: #666;
+            font-size: 0.95em;
+        }
+
+        body.dark-mode .surah-info {
+            color: #aaa;
+        }
+
+        .reciter-info {
+            background: #e8f4f8;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            font-size: 0.95em;
+        }
+
+        body.dark-mode .reciter-info {
+            background: #1a3a4a;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>🌙 Kur'an-ı Kerim</h1>
+        <p style="margin-top: 10px; font-size: 0.95em;">Kur'an'ı Kerim'i Oku</p>
+    </header>
+
+    <div class="container">
+        <div class="controls">
+            <button onclick="toggleDark()" title="Karanlık modu aç/kapat">🌙 Karanlık Mod</button>
+            <input type="text" id="searchInput" placeholder="Ayah numarasını ara..." onkeyup="searchAyah()">
+            <select id="reciterSelect" onchange="changeReciter()">
+                <option value="">🎙️ Rezitator Seçin...</option>
+            </select>
+            <select id="surahSelect" onchange="loadSurah()">
+                <option value="">Sure Seçin...</option>
+            </select>
+            <button onclick="randomSurah()" title="Rastgele sure yükle">🎲 Rastgele Sure</button>
+        </div>
+
+        <div id="reciterInfo" class="reciter-info" style="display: none;"></div>
+        <div id="content"></div>
+    </div>
+
+    <script>
+        const apiBase = "https://api.alquran.cloud/v1";
+        let currentSurahData = null;
+        let currentReciter = 'ar.alafasy';
+
+        // Rezitator-Liste (5 verschiedene Rezitator)
+        const reciters = {
+            'ar.alafasy': {
+                name: '🎙️ السديس (Abdurrahman As-Sudais)',
+                path: 'ar.alafasy'
+            },
+            'ar.abdulbasit': {
+                name: '🎙️ عبد الباسط (Abdulbasit Abdussamad)',
+                path: 'ar.abdulbasit'
+            },
+            'ar.minshawi': {
+                name: '🎙️ محمد صديق المنشاوي (Muhammad Al-Minshawi)',
+                path: 'ar.minshawi'
+            },
+            'ar.husary': {
+                name: '🎙️ علي الحذيفي (Ali Al-Hudhaifi)',
+                path: 'ar.husary'
+            },
+            'ar.maher': {
+                name: '🎙️ ماهر المعيقلي (Maher Al-Muaqali)',
+                path: 'ar.maher'
+            }
+        };
+
+        // Rezitator-Auswahl laden
+        function loadReciters() {
+            const select = document.getElementById('reciterSelect');
+            Object.keys(reciters).forEach(key => {
+                const opt = document.createElement('option');
+                opt.value = key;
+                opt.textContent = reciters[key].name;
+                select.appendChild(opt);
+            });
+        }
+
+        // Rezitator ändern
+        function changeReciter() {
+            const reciterId = document.getElementById('reciterSelect').value;
+            if (reciterId) {
+                currentReciter = reciterId;
+                localStorage.setItem('selectedReciter', reciterId);
+                const reciterInfo = document.getElementById('reciterInfo');
+                reciterInfo.innerHTML = `<strong>✓</strong> ${reciters[reciterId].name.replace('🎙️ ', '')} ausgewählt!`;
+                reciterInfo.style.display = 'block';
+                
+                // Wenn eine Sure geladen ist, neu laden
+                if (currentSurahData) {
+                    loadSurah();
+                }
+            }
+        }
+
+        // Gespeicherten Rezitator laden
+        function loadSavedReciter() {
+            const saved = localStorage.getItem('selectedReciter');
+            if (saved && reciters[saved]) {
+                currentReciter = saved;
+                document.getElementById('reciterSelect').value = saved;
+                const reciterInfo = document.getElementById('reciterInfo');
+                reciterInfo.innerHTML = `<strong>✓</strong> ${reciters[saved].name.replace('🎙️ ', '')} ausgewählt!`;
+                reciterInfo.style.display = 'block';
+            }
+        }
+
+        // Karanlık modu localStorage'dan yükle
+        function loadDarkMode() {
+            if (localStorage.getItem('darkMode') === 'true') {
+                document.body.classList.add('dark-mode');
+            }
+        }
+
+        // Karanlık modu aç/kapat
+        function toggleDark() {
+            const isDark = document.body.classList.toggle('dark-mode');
+            localStorage.setItem('darkMode', isDark);
+        }
+
+        // Tüm sureleri yükle
+        async function loadSurahs() {
+            try {
+                const res = await fetch(`${apiBase}/surah`);
+                const data = await res.json();
+                const select = document.getElementById('surahSelect');
+                
+                if (data.code === 200) {
+                    data.data.forEach(s => {
+                        const opt = document.createElement('option');
+                        opt.value = s.number;
+                        opt.textContent = `${s.number}. ${s.name} (${s.englishName})`;
+                        select.appendChild(opt);
+                    });
+                } else {
+                    throw new Error('API hatası');
+                }
+            } catch(e) {
+                console.error('Surah yükleme hatası:', e);
+                showError('Surah listesi yüklenemedi. Lütfen internet bağlantısını kontrol edin.');
+            }
+        }
+
+        // Seçilen surayı yükle
+        async function loadSurah() {
+            const num = document.getElementById('surahSelect').value;
+            if(!num) return;
+            
+            const content = document.getElementById('content');
+            content.innerHTML = '<div class="loading"><div class="spinner"></div> Yükleniyor...</div>';
+            
+            try {
+                const res = await fetch(`${apiBase}/surah/${num}/editions/tr.diyanet,quran-simple`);
+                const result = await res.json();
+                
+                if (result.code !== 200) {
+                    throw new Error('Sure yüklenemedi');
+                }
+                
+                const tr = result.data[0];
+                const ar = result.data[1];
+                
+                currentSurahData = { tr, ar, num };
+                displaySurah(tr, ar);
+                
+            } catch(e) {
+                console.error('Error:', e);
+                showError('Sure yüklenirken hata oluştu. Lütfen tekrar deneyin.');
+            }
+        }
+
+        // Surayı göster
+        function displaySurah(tr, ar) {
+            const content = document.getElementById('content');
+            let html = `
+                <div class="surah-header">
+                    <h2>${tr.name}</h2>
+                    <div class="surah-info">${tr.englishName} - ${tr.ayahs.length} Ayah</div>
+                </div>
+            `;
+            
+            tr.ayahs.forEach((ayah, i) => {
+                html += `
+                <div class="ayah" data-ayah-number="${ayah.numberInSurah}">
+                    <div class="ayah-number">Ayah ${ayah.numberInSurah}</div>
+                    <div class="arabic">${ar.ayahs[i].text}</div>
+                    <div class="translation">${ayah.text}</div>
+                    <audio controls>
+                        <source src="https://cdn.alquran.cloud/media/audio/ayah/${currentReciter}/${ayah.number}" type="audio/mpeg">
+                        Tarayıcınız ses özelliğini desteklemiyor.
+                    </audio>
+                </div>`;
+            });
+            
+            content.innerHTML = html;
+        }
+
+        // Ayah ara
+        function searchAyah() {
+            if (!currentSurahData) return;
+            
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const ayahs = document.querySelectorAll('.ayah');
+            
+            ayahs.forEach(ayah => {
+                const ayahNumber = ayah.getAttribute('data-ayah-number');
+                if (searchTerm === '' || ayahNumber.includes(searchTerm)) {
+                    ayah.style.display = 'block';
+                } else {
+                    ayah.style.display = 'none';
+                }
+            });
+        }
+
+        // Rastgele sure yükle
+        function randomSurah() {
+            const randomNum = Math.floor(Math.random() * 114) + 1;
+            document.getElementById('surahSelect').value = randomNum;
+            loadSurah();
+        }
+
+        // Hata göster
+        function showError(message) {
+            const content = document.getElementById('content');
+            content.innerHTML = `<div class="error">⚠️ ${message}</div>`;
+        }
+
+        // Sayfa yüklendiğinde
+        window.addEventListener('load', () => {
+            loadDarkMode();
+            loadReciters();
+            loadSavedReciter();
+            loadSurahs();
+        });
+    </script>
+</body>
 </html>
+
